@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.13.2"
+bevy_pixel_camera = "0.13"
 
 
 # Enable a small amount of optimization in debug mode
