@@ -5,7 +5,7 @@ Feature implementations going forward
     - [X] Left/Right translation
     - [ ] Jumping
 - [X] Implement Pixel camera
-- [ ] Collision detection
+- [X] Collision detection
 - [ ] Implement gravity and player physics
 - [ ] Push/Pull objects functionality
 - [ ] Basic level design
