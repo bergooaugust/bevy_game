@@ -1,12 +1,12 @@
 # TODO-list
 Feature implementations going forward
 ## Core mechanics
-- [ ] Basic player movement 
+- [X] Basic player movement 
     - [X] Left/Right translation
-    - [ ] Jumping
+    - [X] Jumping
 - [X] Implement Pixel camera
 - [X] Collision detection
-- [ ] Implement gravity and player physics
+- [X] Implement gravity and player physics
 - [ ] Push/Pull objects functionality
 - [ ] Basic level design
 

@@ -4,7 +4,7 @@ use bevy_pixel_camera::{
 };
 
 const PLAYER_MOVEMENT_SPEED: f32 = 50.0;
-const GRAVITY: f32 = 10.0;
+const GRAVITY: f32 = 400.0;
 const TERMINAL_VELOCITY: f32 = 200.0;
 
 
@@ -36,7 +36,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Player,
         Velocity::default(),
-        Acceleration::default(),
+        Acceleration(Vec2::new(0.0, -GRAVITY)),
         BoundingBox{
             size_x: 8.0, 
             size_y: 18.0, 
@@ -70,30 +70,24 @@ fn player_controls(
     kb: Res<ButtonInput<KeyCode>>,
 ){
     for mut velocity in &mut player_query {
-        let mut x_changed: bool = false;
-        let mut y_changed: bool = false;
-        if kb.pressed(KeyCode::ArrowUp){
-            velocity.y = PLAYER_MOVEMENT_SPEED;
-            y_changed = true;
+        let mut x_change: f32 = 0.0;
+        let mut y_change: f32 = 0.0;
+        if kb.pressed(KeyCode::ArrowUp) && velocity.y == 0.0{
+            y_change = 200.0;
         }
         if kb.pressed(KeyCode::ArrowDown){
-            velocity.y = -PLAYER_MOVEMENT_SPEED;
-            y_changed = true;
+            y_change = -20.0;
         }
         if kb.pressed(KeyCode::ArrowLeft){
-            velocity.x = -PLAYER_MOVEMENT_SPEED;
-            x_changed = true;
+            x_change -= PLAYER_MOVEMENT_SPEED;
         }
         if kb.pressed(KeyCode::ArrowRight){
-            velocity.x = PLAYER_MOVEMENT_SPEED;
-            x_changed = true;
+            x_change += PLAYER_MOVEMENT_SPEED;
         }
-        if !x_changed {
-            velocity.x = 0.0;
+        if y_change != 0.0 {
+            velocity.y = y_change;
         }
-        if !y_changed {
-            velocity.y = 0.0;
-        }
+        velocity.x = x_change;
     }
 }
 
@@ -113,9 +107,14 @@ fn apply_physics(
         for bb in &mut bb_query{
             if check_bb_overlap(& tfv.3, &bb) {
                 let pv = penetration_vector(& tfv.3, &bb);
-
-                tfv.0.translation.x -= pv.x;
-                tfv.0.translation.y -= pv.y;
+                if pv.x != 0.0 {
+                    tfv.0.translation.x -= pv.x;
+                    tfv.1.x = 0.0;
+                }
+                if pv.y != 0.0 {
+                    tfv.0.translation.y -= pv.y;
+                    tfv.1.y = 0.0;
+                }
                 break;
             }
         }
