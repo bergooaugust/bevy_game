@@ -7,6 +7,7 @@ Feature implementations going forward
 - [X] Implement Pixel camera
 - [X] Collision detection
 - [X] Implement gravity and player physics
+- [ ] Player animation
 - [ ] Push/Pull objects functionality
 - [ ] Basic level design
 
