@@ -61,7 +61,8 @@ fn setup(mut commands: Commands,
             ..default()
         },
         Player{
-            colliding: CollisionNormal::Neutral,
+            collidingX: CollisionNormalX::Neutral,
+            collidingY: CollisionNormalY::Neutral,
             state: SpriteState::Neutral
         },
         Velocity::default(),
@@ -97,6 +98,111 @@ fn setup(mut commands: Commands,
     commands.spawn((
         SpriteBundle {
             transform: Transform {
+                translation: Vec3::new(0.0, 60.0, 0.0),
+                scale: Vec3::new(200.0, 10.0, 0.0),
+                ..default()
+            },
+            sprite: Sprite{
+                color: Color::GREEN,
+                ..default()
+            },
+            ..default()
+        },
+        BoundingBox{
+            size_x: 200.0, 
+            size_y: 10.0, 
+            min_point: Vec2::new(-100.0, 55.0),
+            max_point: Vec2::new(100.0, 65.0)
+        },
+        Static,
+    ));
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(-105.0, 0.0, 0.0),
+                scale: Vec3::new(10.0, 120.0, 0.0),
+                ..default()
+            },
+            sprite: Sprite{
+                color: Color::GREEN,
+                ..default()
+            },
+            ..default()
+        },
+        BoundingBox{
+            size_x: 10.0, 
+            size_y: 120.0, 
+            min_point: Vec2::new(-110.0, -60.0),
+            max_point: Vec2::new(-100.0, 60.0)
+        },
+        Static,
+    ));
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(105.0, 0.0, 0.0),
+                scale: Vec3::new(10.0, 120.0, 0.0),
+                ..default()
+            },
+            sprite: Sprite{
+                color: Color::GREEN,
+                ..default()
+            },
+            ..default()
+        },
+        BoundingBox{
+            size_x: 10.0, 
+            size_y: 120.0, 
+            min_point: Vec2::new(100.0, -60.0),
+            max_point: Vec2::new(110.0, 60.0)
+        },
+        Static,
+    ));
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(20.0, 0.0, 0.0),
+                scale: Vec3::new(50.0, 10.0, 0.0),
+                ..default()
+            },
+            sprite: Sprite{
+                color: Color::ORANGE_RED,
+                ..default()
+            },
+            ..default()
+        },
+        BoundingBox{
+            size_x: 50.0, 
+            size_y: 10.0, 
+            min_point: Vec2::new(-5.0, -5.0),
+            max_point: Vec2::new(45.0, 5.0)
+        },
+        Static,
+    ));
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(-20.0, -20.0, 0.0),
+                scale: Vec3::new(50.0, 10.0, 0.0),
+                ..default()
+            },
+            sprite: Sprite{
+                color: Color::ORANGE_RED,
+                ..default()
+            },
+            ..default()
+        },
+        BoundingBox{
+            size_x: 50.0, 
+            size_y: 10.0, 
+            min_point: Vec2::new(-45.0, -25.0),
+            max_point: Vec2::new(5.0, -15.0)
+        },
+        Static,
+    ));
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform {
                 translation: Vec3::new(0.0, 0.0, -1.0),
                 scale: Vec3::new(500.0, 500.0, 0.0),
                 ..default()
@@ -111,13 +217,13 @@ fn setup(mut commands: Commands,
 }
 
 fn player_controls(
-    mut player_query: Query<(&mut Velocity, &mut Player)>,
+    mut player_query: Query<(&mut Velocity, &mut Player, &mut Acceleration)>,
     kb: Res<ButtonInput<KeyCode>>,
 ){
     for mut player in &mut player_query {
         let mut x_change: f32 = 0.0;
         let mut y_change: f32 = 0.0;
-        if player.1.colliding == CollisionNormal::Down {
+        if player.1.collidingY == CollisionNormalY::Down {
             if kb.pressed(KeyCode::ArrowUp){
                 y_change += 200.0;
             }
@@ -140,6 +246,14 @@ fn player_controls(
             
         } else {
             player.1.state = SpriteState::InAir;
+            if kb.pressed(KeyCode::ArrowLeft){
+                player.2.x = -0.5 * PLAYER_MOVEMENT_SPEED;
+            }
+            else if kb.pressed(KeyCode::ArrowRight){
+                player.2.x = 0.5 * PLAYER_MOVEMENT_SPEED;
+            } else {
+                player.2.x = 0.0;
+            }
         }
     }
 }
@@ -198,35 +312,37 @@ fn static_response(
     mut query: Query<(&mut Transform, &mut Velocity, &mut BoundingBox, &mut Player), (Without<Static>, Changed<Transform>)>, 
 
 ) {
-    for mut tfv in &mut query {
-        tfv.3.colliding = CollisionNormal::Neutral;    
+    let mut new_col_normal_x: CollisionNormalX = CollisionNormalX::Neutral;
+    let mut new_col_normal_y: CollisionNormalY = CollisionNormalY::Neutral;
+
+    for mut tfv in &mut query {  
         for bb in &mut static_query{
             if check_bb_overlap(& tfv.2, &bb) {
                 let pv = penetration_vector(& tfv.2, &bb);
                 if pv.x != 0.0 {
                     tfv.0.translation.x -= pv.x;
                     tfv.1.x = 0.0;
-                    tfv.3.colliding = if pv.x < 0.0 {
-                        CollisionNormal::Left
+                    new_col_normal_x = if pv.x < 0.0 {
+                        CollisionNormalX::Left
                     } else {
-                        CollisionNormal::Right
+                        CollisionNormalX::Right
                     }
                 }
                 if pv.y != 0.0 {
                     tfv.0.translation.y -= pv.y;
                     tfv.1.y = 0.0;
-                    tfv.3.colliding = if pv.y < 0.0 {
-                        CollisionNormal::Down
-                    } else if pv.y > 0.0 {
-                        CollisionNormal::Up
+                    new_col_normal_y = if pv.y < 0.0 {
+                        CollisionNormalY::Down
                     } else {
-                        CollisionNormal::Neutral
-                    }
+                        CollisionNormalY::Up
+                    } 
                 }
-                break;
-            }
-            
+            }         
         }
+        tfv.3.collidingX = new_col_normal_x;
+        tfv.3.collidingY = new_col_normal_y;
+
+
     }
 }
 
@@ -283,12 +399,17 @@ fn update_bounding_boxes(bb: &mut BoundingBox, tf: &Transform)
     bb.max_point.y = tf.translation.y + bb.size_y / 2.0;
 }
 
-#[derive(Default, PartialEq)]
-enum CollisionNormal{
+#[derive(Default, PartialEq, Clone, Copy)]
+enum CollisionNormalY{
     #[default]
     Neutral,
     Up,
     Down,
+}
+#[derive(Default, PartialEq, Clone, Copy)]
+enum CollisionNormalX{
+    #[default]
+    Neutral,
     Left,
     Right,
 }
@@ -313,7 +434,8 @@ struct BoundingBox{
 
 #[derive(Component)]
 struct Player{
-    colliding: CollisionNormal,
+    collidingX: CollisionNormalX,
+    collidingY: CollisionNormalY,
     state: SpriteState,
 }
 
